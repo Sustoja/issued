@@ -127,3 +127,4 @@ def test_reader_toolbars_ignore_touch_compat_mouse_events_and_toggle_on_center_t
     assert "onCenterTap = () => {}" in script
     assert "clearCenterTap();\n      if (zoomed) resetZoom();" in script
     assert "}, DOUBLE_TAP_MS);" in script
+    assert "clearCenterTap();\n    clearConstraintTimer();" in script

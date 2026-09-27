@@ -98,6 +98,11 @@ export function createReaderInteractions({
     constraintTimer = null;
   };
 
+  const clearCenterTap = () => {
+    window.clearTimeout(centerTapTimer);
+    centerTapTimer = null;
+  };
+
   // Panzoom's built-in containment does not account for a flex-centered element.
   // The spread therefore settles against its actual rendered edges after a drag.
   const constrainSpreadPan = ({ animate = false } = {}) => {
@@ -159,6 +164,9 @@ export function createReaderInteractions({
 
   const resetZoom = ({ animate = true } = {}) => {
     lastTap = null;
+    // A page turn can land inside the double-tap window of a center tap; without this the
+    // pending tap would toggle the toolbars on the new page.
+    clearCenterTap();
     clearConstraintTimer();
     if (!zoomed && panzoom.getScale() === 1) return;
     panzoom.reset({ ...animationOptions(animate), contain: false });
@@ -208,11 +216,6 @@ export function createReaderInteractions({
     }
     const rect = viewport.getBoundingClientRect();
     zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2);
-  };
-
-  const clearCenterTap = () => {
-    window.clearTimeout(centerTapTimer);
-    centerTapTimer = null;
   };
 
   const registerTap = (event) => {
