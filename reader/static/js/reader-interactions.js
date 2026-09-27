@@ -49,6 +49,7 @@ export function createReaderInteractions({
   content,
   onPrevious,
   onNext,
+  onCenterTap = () => {},
   isDisabled = () => false,
 }) {
   if (!viewport || !content) {
@@ -62,6 +63,7 @@ export function createReaderInteractions({
   let constraintTimer = null;
   let lastTap = null;
   let pointer = null;
+  let centerTapTimer = null;
 
   const panzoom = Panzoom(content, {
     minScale: 1,
@@ -208,6 +210,11 @@ export function createReaderInteractions({
     zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2);
   };
 
+  const clearCenterTap = () => {
+    window.clearTimeout(centerTapTimer);
+    centerTapTimer = null;
+  };
+
   const registerTap = (event) => {
     const tap = { x: event.clientX, y: event.clientY, time: performance.now() };
     if (
@@ -216,11 +223,20 @@ export function createReaderInteractions({
       distance(tap, lastTap) <= DOUBLE_TAP_DISTANCE_PX
     ) {
       lastTap = null;
+      clearCenterTap();
       if (zoomed) resetZoom();
       else zoomAt(tap.x, tap.y);
       return;
     }
     lastTap = tap;
+    // A single tap is only known once the double-tap window has passed without a second tap.
+    if (!zoomed) {
+      clearCenterTap();
+      centerTapTimer = window.setTimeout(() => {
+        centerTapTimer = null;
+        onCenterTap();
+      }, DOUBLE_TAP_MS);
+    }
   };
 
   const pointerDown = (event) => {
@@ -299,6 +315,7 @@ export function createReaderInteractions({
     content.removeEventListener('panzoomend', panEnd);
     window.removeEventListener('resize', resize);
     clearConstraintTimer();
+    clearCenterTap();
     panzoom.destroy();
     panzoom.resetStyle();
   };
